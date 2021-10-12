@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Requests\storePostRequest;
 
 class HomeController extends Controller
 {
+    public function __construct(){
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -15,7 +20,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $data = Post::orderBy('id', 'DESC')->get();
+        $data = Post::where('user_id', auth()->id())->orderBy('id', 'DESC')->get();
         return view('home', compact('data'));
     }
 
@@ -26,7 +31,8 @@ class HomeController extends Controller
      */
     public function create()
     {
-        return view('create');
+        $categories = Category::all();
+        return view('create', compact('categories'));
     }
 
     /**
@@ -36,16 +42,9 @@ class HomeController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(storePostRequest $request)
-    {   
-        /*$post = new Post();
-        $post->name = $request->name;
-        $post->description = $request->description;
-        $post->save();*/
-
-        Post::create([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
+    {
+        $validated = $request->validated();  
+        Post::create($validated);
 
         return redirect('/posts');
     }
@@ -58,6 +57,11 @@ class HomeController extends Controller
      */
     public function show(Post $post)
     {
+        /*if($post->user_id != auth()->id()){
+            abort(403);
+        }*/
+
+        $this->authorize('view', $post);
         return view('show', compact('post'));
     }
 
@@ -69,7 +73,13 @@ class HomeController extends Controller
      */
     public function edit(Post $post)
     {
-        return view('edit', compact('post'));
+        /*if($post->user_id != auth()->id()){
+            abort(403);
+        }*/
+
+        $this->authorize('view', $post);
+        $categories = Category::all();
+        return view('edit', compact('post', 'categories'));
     }
 
     /**
@@ -81,14 +91,8 @@ class HomeController extends Controller
      */
     public function update(storePostRequest $request, Post $post)
     {
-        /*$post->name = $request->name;
-        $post->description = $request->description;
-        $post->save();*/
-
-        $post->update([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
+        $validated = $request->validated();  
+        $post->update($validated);
 
         return redirect('/posts');
     }
