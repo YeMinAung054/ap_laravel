@@ -19,7 +19,7 @@ use App\Http\Controllers\HomeController;
 */
 
 Route::get('/', function(){
-    return TestFacade::execute();
+    return view('welcome');
 });
 
 Route::resource('posts', HomeController::class);

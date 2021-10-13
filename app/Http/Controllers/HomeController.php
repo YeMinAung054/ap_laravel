@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\User;
 use App\Mail\PostStored;
 use App\Models\Category;
 use App\Mail\PostCreated;
 use Illuminate\Http\Request;
+use App\Events\PostCreatedEvent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\storePostRequest;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PostCreatedNotification;
 
 class HomeController extends Controller
 {
@@ -24,6 +28,17 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
+        // Notifications
+
+        /*$user = User::find(1);
+        $user->notify(new PostCreatedNotification());
+        echo 'noti send';exit()*/
+
+        // OR 
+
+        /*Notification::send(User::find(1), new PostCreatedNotification());
+        echo 'noti send';exit();*/
+
         $data = Post::where('user_id', auth()->id())->orderBy('id', 'DESC')->get();
         return view('home', compact('data'));
     }
@@ -50,6 +65,7 @@ class HomeController extends Controller
         $validated = $request->validated();  
         $post = Post::create($validated + ['user_id' => Auth::user()->id]);
         //Mail::to('admin@gmail.com')->send(new PostCreated());
+        event(new PostCreatedEvent($post));
         return redirect('/posts')->with('status', config('aprogrammer.message.created'));
     }
 
